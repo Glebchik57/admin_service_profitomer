@@ -17,3 +17,4 @@ class AdminRegistrationForm(FlaskForm):
     name = StringField("Name: ")
     surname = StringField("Surname: ")
     password = PasswordField('Password: ')
+    special_key = StringField("Special Key: ")
