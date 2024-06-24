@@ -2,17 +2,19 @@ import sqlalchemy as db
 from dotenv import load_dotenv
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime
 from flask_login import UserMixin
+from flask import session as flask_session
 
 from db_config import Base, session
-from app import login_manager
+from admin import login_manager
 
 
 @login_manager.user_loader
 def load_user(users_id):
     '''Загрузка пользователя по идентификатору'''
-    
-    if session.get('is_admin'):
+
+    if flask_session.get('is_admin'):
         return session.query(Admins).get(users_id)
+
 
 load_dotenv()
 
@@ -309,5 +311,5 @@ class Admins(Base, UserMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
     surname = db.Column(db.String(100))
-    password = db.Column(db.String(64), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
     active = db.Column(db.SmallInteger)
