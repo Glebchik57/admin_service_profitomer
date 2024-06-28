@@ -1,7 +1,8 @@
-from flask_admin import Admin, AdminIndexView
+from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask import session as flask_session, redirect, url_for
 from flask_login import current_user
+from . import app
 
 
 from db_config import session
@@ -19,11 +20,15 @@ from models import (
 
 
 class MyAdminIndexView(AdminIndexView):
+    @expose('/')
+    def index(self):
+        return self.render('admin/index.html')
+
     def is_accessible(self):
-        return current_user.is_authenticated and flask_session.get('is_admin')
+        return current_user.is_authenticated and current_user.email in app.config['ADMINS']
 
     def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('admin_autorization'))
+        return redirect(url_for('autorization'))
 
 
 def create_admin(app):
