@@ -1,5 +1,3 @@
-import os
-
 from flask import (
     redirect,
     render_template,
@@ -21,7 +19,7 @@ from flask_login import (
 from dotenv import load_dotenv
 
 from admin import app
-from models import Admins
+from models import Users
 from .forms import (
     AdminAutorizationForm,
     AdminRegistrationForm
@@ -30,11 +28,39 @@ from db_config import session
 
 load_dotenv()
 
-SPCL_KEY = os.getenv('SPCL_KEY')
+@app.route('/')
+@login_required
+def index():
+    '''Тестовое представления главной страницы'''
+
+    try:
+        id = current_user.id
+        return render_template('base_template.html', name=id)
+    except Exception as error:
+        return render_template(
+            'base_template.html',
+            name=f'что-то пошло не так{error}'
+        )
 
 
-@app.route("/admin_registration", methods=['GET', 'POST'])
-def admin_registration():
+@app.route('/test')
+@login_required
+def test():
+    if current_user.email in app.config['ADMINS']:
+        try:
+            id = current_user.id
+            return render_template('test_access.html', name=id)
+        except Exception as error:
+            return render_template(
+                'test_access.html',
+                name=f'что-то пошло не так{error}'
+            )
+    else:
+        return render_template('fail_access.html')
+
+
+@app.route("/registration", methods=['GET', 'POST'])
+def registration():
     '''Представление регистрации.
     Включает в себя проверку аворизации пользователя, валидации формы,
     наличия в бд пользователей с аналогичными полями(email, tg, phone).
@@ -47,31 +73,25 @@ def admin_registration():
             name = form.name.data
             surname = form.surname.data
             password = form.password.data
-            special_key = form.special_key.data
-            if special_key != SPCL_KEY:
-                flash('Неверно введен специальный код', 'error')
+            phone = form.phone.data
+            try:
+                new_user = Users(
+                    email=email,
+                    phone=phone,
+                    name=name,
+                    surname=surname,
+                    password=generate_password_hash(password),
+                )
+                session.add(new_user)
+                session.commit()
+                return redirect(url_for('index'))
+            except Exception as error:
+                session.rollback()
+                flash(f'Ошибка базы данных. Попробуйте позже. {error}', 'error')
                 return render_template(
-                        'admin_registration.html',
-                        form=form
-                    )
-            else:
-                try:
-                    new_user = Admins(
-                        email=email,
-                        name=name,
-                        surname=surname,
-                        password=generate_password_hash(password),
-                    )
-                    session.add(new_user)
-                    session.commit()
-                    return redirect(url_for('admin.index'))
-                except Exception as error:
-                    session.rollback()
-                    flash(f'Ошибка базы данных. Попробуйте позже. {error}', 'error')
-                    return render_template(
-                        'admin_registration.html',
-                        form=form
-                    )
+                    'admin_registration.html',
+                    form=form
+                )
         else:
             flash('форма заполнена е верно')
             return render_template(
@@ -83,7 +103,7 @@ def admin_registration():
 
 
 @app.route("/admin_autorization", methods=['GET', 'POST'])
-def admin_autorization():
+def autorization():
     '''Представление авторизации.
     Включает проверку авторизации пользователя, валидации формы,
     активации пользователя, соответствия пароля,
@@ -93,28 +113,29 @@ def admin_autorization():
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
-        user = session.query(Admins).filter_by(email=email).first()
+        user = session.query(Users).filter_by(email=email).first()
         if not user:
             flash('Неверный email.', 'warning')
-            return redirect(url_for('admin_autorization'))
+            return redirect(url_for('autorization'))
         else:
             try:
                 if check_password_hash(user.password, password):
+                    user.active = 1
+                    session.commit()
                     login_user(user, remember=True)
-                    flask_session['is_admin'] = True
-                    return redirect(url_for('admin.index'))
+                    return redirect(url_for('index'))
                 else:
                     flash('Неверный пароль.', 'warning')
-                    return redirect(url_for('admin_autorization'))
+                    return redirect(url_for('autorization'))
             except Exception as error:
                 flash(f'проблемы здесь {error}', 'warning')
-                return redirect(url_for('admin_autorization'))
+                return redirect(url_for('autorization'))
     else:
         return render_template('admin_autorization.html', form=form)
 
 
-@app.route("/admin_logout", methods=['GET', 'POST'])
+@app.route("/logout", methods=['GET', 'POST'])
 def admin_logout():
     logout_user()
     flask_session.pop('is_admin', None)
-    return redirect(url_for('admin_autorization'))
+    return redirect(url_for('autorization'))
