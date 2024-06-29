@@ -8,8 +8,9 @@ load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+templates = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=templates)
 
 ADMINS = ['g.sevostyanov@inbox.ru']
 
@@ -27,4 +28,4 @@ app.config['ADMINS'] = ADMINS
 
 login_manager = LoginManager(app)
 
-from . import views
+from autorization import views
