@@ -1,3 +1,7 @@
+'''Пакет административной панели.
+Предоставляет возможность работы с проектом в режиме администратора,
+производить операции CRUD с моделями'''
+
 import os
 
 from flask import Flask
@@ -8,14 +12,15 @@ load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-templates = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
+templates = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))  # переопределения нахождения шаблонов
 
 app = Flask(__name__, template_folder=templates)
 
-ADMINS = ['g.sevostyanov@inbox.ru']
+ADMINS = ['g.sevostyanov@inbox.ru']  # список администраторов
 
 
 def filter_valid_latin1_characters(key):
+    '''проверяет соответствие secret key. возвращает булевое значение'''
     return ''.join(char for char in key if char.isascii() and char.isprintable())
 
 
