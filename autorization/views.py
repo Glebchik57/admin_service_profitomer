@@ -19,6 +19,7 @@ from flask_login import (
 from dotenv import load_dotenv
 
 from admin import app
+from admin.utils import chek_admin
 from models import Users
 from .forms import (
     AdminAutorizationForm,
@@ -44,19 +45,16 @@ def index():
 
 
 @app.route('/test')
-@login_required
+@chek_admin
 def test():
-    if current_user.email in app.config['ADMINS']:
-        try:
-            id = current_user.id
-            return render_template('test_access.html', name=id)
-        except Exception as error:
-            return render_template(
-                'test_access.html',
-                name=f'что-то пошло не так{error}'
-            )
-    else:
-        return render_template('fail_access.html')
+    try:
+        id = current_user.id
+        return render_template('test_access.html', name=id)
+    except Exception as error:
+        return render_template(
+            'test_access.html',
+            name=f'что-то пошло не так{error}'
+        )
 
 
 @app.route("/registration", methods=['GET', 'POST'])

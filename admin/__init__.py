@@ -16,7 +16,7 @@ templates = os.path.abspath(os.path.join(os.path.dirname(__file__), '../template
 
 app = Flask(__name__, template_folder=templates)
 
-ADMINS = ['g.sevostyanov@inbox.ru']  # список администраторов
+ADMINS = []  # список администраторов
 
 
 def filter_valid_latin1_characters(key):
